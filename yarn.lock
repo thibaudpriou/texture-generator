@@ -447,6 +447,13 @@
     magic-string "^0.30.17"
     vitefu "^1.0.6"
 
+"@threlte/core@8.0.5":
+  version "8.0.5"
+  resolved "https://registry.yarnpkg.com/@threlte/core/-/core-8.0.5.tgz#818bf01a95e1c3fb3ba4e249f7ecf05c6a872bdd"
+  integrity sha512-4SvufZJpETJxk8k+8BxPrKtb36OKOoFJrSs9oe1oFqaOdamLAQgSt5Rvt4NrFMhT7fYvKJI0vYumEb+AzsSBiA==
+  dependencies:
+    mitt "^3.0.1"
+
 "@types/chai@^5.2.2":
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-5.2.2.tgz#6f14cea18180ffc4416bc0fd12be05fdd73bdd6b"
@@ -1270,6 +1277,11 @@ minimatch@^9.0.4:
   dependencies:
     brace-expansion "^2.0.1"
 
+mitt@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.1.tgz#ea36cf0cc30403601ae074c8f77b7092cdab36d1"
+  integrity sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==
+
 mri@^1.1.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/mri/-/mri-1.2.0.tgz#6721480fec2a11a4889861115a48b6cbe7cc8f0b"
@@ -1593,6 +1605,11 @@ svelte@^5.0.0:
     locate-character "^3.0.0"
     magic-string "^0.30.11"
     zimmerframe "^1.1.2"
+
+three@0.177.0:
+  version "0.177.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.177.0.tgz#e51f2eb2b921fbab535bdfa81c403f9993b9dd83"
+  integrity sha512-EiXv5/qWAaGI+Vz2A+JfavwYCMdGjxVsrn3oBwllUoqYeaBO75J63ZfyaQKoiLrqNHoTlUc6PFgMXnS0kI45zg==
 
 tinybench@^2.9.0:
   version "2.9.0"

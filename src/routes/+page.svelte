@@ -1,2 +1,8 @@
-<h1>Texture generator</h1>
+<script lang="ts">
+	import Scene from '$lib/components/Scene.svelte';
+	import { Canvas } from '@threlte/core';
+</script>
 
+<Canvas>
+	<Scene />
+</Canvas>
