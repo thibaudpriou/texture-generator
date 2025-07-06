@@ -1,6 +1,14 @@
 <script lang="ts">
 	import { Button, Slider } from 'carbon-components-svelte';
-	import { distance, getColor, getRandomPoints, HEIGHT, VoronoiGrid, WIDTH } from './voronoi';
+	import {
+		distanceSquared,
+		getColor,
+		getRandomPoints,
+		HEIGHT,
+		VoronoiGrid,
+		WIDTH
+	} from './voronoi';
+	import convert from 'color-convert';
 
 	const createPixels = (
 		elt: HTMLCanvasElement | undefined,
@@ -12,33 +20,41 @@
 			return;
 		}
 
-		const ctx = elt.getContext('2d');
+		const ctx = elt.getContext('2d', { alpha: false });
 		if (!ctx) {
 			console.error('oops getContext failed');
 			return;
 		}
 
-		// points.forEach(({ x, y }) => {
-		// 	const { hue, lightness } = getColor({ x: 0, y: 0 });
-		// 	ctx.fillStyle = `hsl(${hue} 100% ${lightness}%)`;
-		// 	ctx.fillRect(x, y, 50, 50);
-		// });
+		const canvasWidth = elt.width;
+		const imageData = ctx.getImageData(0, 0, canvasWidth, elt.height);
 
+		const buf = new ArrayBuffer(imageData.data.length);
+		const buf8 = new Uint8ClampedArray(buf);
+		const data = new Uint32Array(buf);
+
+		const computeStart = new Date().valueOf();
 		for (let y = 0; y < HEIGHT - 1; y++) {
 			for (let x = 0; x < WIDTH - 1; x++) {
 				const p = { x, y };
 				const nearest = grid.getNearestPoint(p);
-				const distanceToNearest = distance(nearest, p);
+				const distanceToNearest = Math.sqrt(distanceSquared(nearest, p));
 				const { hue, lightness } = getColor({
 					point: nearest,
 					distanceToNearest,
 					lightnessOffset,
 					lightnessRatio
 				});
-				ctx.fillStyle = `hsl(${hue} 100% ${lightness}%)`;
-				ctx.fillRect(x, y, 1, 1);
+
+				const [red, green, blue] = convert.hsl.rgb([hue, 100, lightness]);
+				// alpha blue green red
+				data[y * canvasWidth + x] = (255 << 24) | (blue << 16) | (green << 8) | red;
 			}
 		}
+
+		imageData.data.set(buf8);
+		ctx.putImageData(imageData, 0, 0);
+		console.debug(`finished computing in ${new Date().valueOf() - computeStart}ms`);
 	};
 
 	let canvasElt: HTMLCanvasElement | undefined;
