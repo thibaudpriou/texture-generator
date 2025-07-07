@@ -66,7 +66,7 @@ export const getColor = ({
 	lightnessRatio: number;
 }): Pick<Pixel, 'hue' | 'lightness'> => {
 	// squared to save compute
-	const distanceToOrigin = point.x ** 2 + point.y ** 2;
+	// const distanceToOrigin = point.x ** 2 + point.y ** 2;
 
 	const lightness = (distanceToNearest - lightnessOffset) * lightnessRatio;
 	return {
