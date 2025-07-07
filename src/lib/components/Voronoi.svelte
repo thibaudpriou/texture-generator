@@ -7,7 +7,7 @@
 		HEIGHT,
 		VoronoiGrid,
 		WIDTH
-	} from './voronoi';
+	} from '../compute/voronoi';
 	import convert from 'color-convert';
 
 	const createPixels = (
