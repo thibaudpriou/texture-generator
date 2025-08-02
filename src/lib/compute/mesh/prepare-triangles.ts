@@ -21,13 +21,14 @@ export const prepareTriangles = ({
 	// create triangles
 	const delaunayTrianglesCoordinates = createDelaunayMesh(width, height, nbPoints);
 
-	const triangles: TrianglesById = {};
+	const trianglesById: TrianglesById = {};
 	const trianglesByNodes: TrianglesByNodes = {};
-	for (const id in delaunayTrianglesCoordinates) {
-		const coordinates = delaunayTrianglesCoordinates[id];
+	for (const index in delaunayTrianglesCoordinates) {
+		const coordinates = delaunayTrianglesCoordinates[index];
 		const incenter = computeIncenter(coordinates);
 		const stressVector = getStressVector({ coordinates, incenter });
 
+		const id = index;
 		const triangle: Triangle = {
 			id,
 			coordinates,
@@ -35,7 +36,7 @@ export const prepareTriangles = ({
 			stressVector
 		};
 
-		triangles[id] = triangle;
+		trianglesById[id] = triangle;
 		const points = coordToPoints(coordinates);
 
 		// generate index for easy processing in the future
@@ -60,6 +61,6 @@ export const prepareTriangles = ({
 
 	return {
 		trianglesByNodes,
-		triangles
+		trianglesById
 	};
 };
