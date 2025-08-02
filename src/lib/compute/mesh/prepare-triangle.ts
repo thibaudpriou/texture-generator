@@ -4,12 +4,20 @@ import { createDelaunayMesh } from './create-delaunay-mesh';
 import { hashPoint } from './hash-point';
 import type { Triangle, PointHash } from './types';
 
-export const prepareTriangle = (width: number, height: number, nbPoints: number) => {
+export const prepareTriangle = ({
+	width,
+	height,
+	nbPoints
+}: {
+	width: number;
+	height: number;
+	nbPoints: number;
+}) => {
 	// create triangles
 	const delaunayTrianglesCoordinates = createDelaunayMesh(width, height, nbPoints);
 
 	const triangles: Triangle[] = [];
-	const nodesByTriangles: Record<PointHash, Record<Triangle['id'], true>> = {};
+	const trianglesByNodes: Record<PointHash, Record<Triangle['id'], true>> = {};
 	for (const id in delaunayTrianglesCoordinates) {
 		const coordinates = delaunayTrianglesCoordinates[id];
 		const triangle = {
@@ -25,24 +33,24 @@ export const prepareTriangle = (width: number, height: number, nbPoints: number)
 		const p1Index = hashPoint(points[0]);
 		const p2Index = hashPoint(points[1]);
 		const p3Index = hashPoint(points[2]);
-		if (!nodesByTriangles[p1Index]) {
-			nodesByTriangles[p1Index] = {};
+		if (!trianglesByNodes[p1Index]) {
+			trianglesByNodes[p1Index] = {};
 		}
-		nodesByTriangles[p1Index][p1Index] = true;
-		if (!nodesByTriangles[p2Index]) {
-			nodesByTriangles[p2Index] = {};
+		trianglesByNodes[p1Index][id] = true;
+		if (!trianglesByNodes[p2Index]) {
+			trianglesByNodes[p2Index] = {};
 		}
-		nodesByTriangles[p2Index][p2Index] = true;
-		if (!nodesByTriangles[p3Index]) {
-			nodesByTriangles[p3Index] = {};
+		trianglesByNodes[p2Index][id] = true;
+		if (!trianglesByNodes[p3Index]) {
+			trianglesByNodes[p3Index] = {};
 		}
-		nodesByTriangles[p3Index][p3Index] = true;
+		trianglesByNodes[p3Index][id] = true;
 	}
 
 	// TODO init stress vector to each triangle
 
 	return {
-		nodesByTriangles,
+		trianglesByNodes,
 		triangles
 	};
 };

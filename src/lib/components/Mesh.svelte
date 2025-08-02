@@ -53,7 +53,11 @@
 		}
 	};
 
-	const { nodesByTriangles, triangles } = prepareTriangle(WIDTH, HEIGHT, NB_POINTS);
+	const { trianglesByNodes, triangles } = prepareTriangle({
+		width: WIDTH,
+		height: HEIGHT,
+		nbPoints: NB_POINTS
+	});
 	/**
 	 * TODO generate cracks with the following algorithm
 	 * - loop on nodes
