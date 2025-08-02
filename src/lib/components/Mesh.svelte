@@ -1,9 +1,7 @@
 <script lang="ts">
-	import { createDelaunayMesh } from '$lib/compute/mesh/create-delaunay-mesh';
-	import { computeIncenter } from '$lib/compute/mesh/compute-incenter';
 	import type { Triangle, Point } from '$lib/compute/mesh/types';
 	import { coordToPoints } from '$lib/compute/mesh/coord-to-points';
-	import { prepareTriangle } from '$lib/compute/mesh/prepare-triangle';
+	import { prepareTriangles } from '$lib/compute/mesh/prepare-triangles';
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
@@ -53,7 +51,7 @@
 		}
 	};
 
-	const { trianglesByNodes, triangles } = prepareTriangle({
+	const { trianglesByNodes, triangles } = prepareTriangles({
 		width: WIDTH,
 		height: HEIGHT,
 		nbPoints: NB_POINTS

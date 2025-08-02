@@ -4,7 +4,7 @@ import { createDelaunayMesh } from './create-delaunay-mesh';
 import { hashPoint } from './hash-point';
 import type { Triangle, PointHash } from './types';
 
-export const prepareTriangle = ({
+export const prepareTriangles = ({
 	width,
 	height,
 	nbPoints
