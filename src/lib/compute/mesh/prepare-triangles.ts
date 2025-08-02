@@ -2,31 +2,40 @@ import { computeIncenter } from './compute-incenter';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
 import { hashPoint } from './hash-point';
-import type { Triangle, PointHash } from './types';
+import type { Triangle, StreeVector, TrianglesById, TrianglesByNodes } from './types';
 
 export const prepareTriangles = ({
 	width,
 	height,
-	nbPoints
+	nbPoints,
+	getStressVector
 }: {
 	width: number;
 	height: number;
 	nbPoints: number;
-}) => {
+	getStressVector: (triangle: Pick<Triangle, 'coordinates' | 'incenter'>) => StreeVector;
+}): {
+	trianglesById: TrianglesById;
+	trianglesByNodes: TrianglesByNodes;
+} => {
 	// create triangles
 	const delaunayTrianglesCoordinates = createDelaunayMesh(width, height, nbPoints);
 
-	const triangles: Triangle[] = [];
-	const trianglesByNodes: Record<PointHash, Record<Triangle['id'], true>> = {};
+	const triangles: TrianglesById = {};
+	const trianglesByNodes: TrianglesByNodes = {};
 	for (const id in delaunayTrianglesCoordinates) {
 		const coordinates = delaunayTrianglesCoordinates[id];
-		const triangle = {
+		const incenter = computeIncenter(coordinates);
+		const stressVector = getStressVector({ coordinates, incenter });
+
+		const triangle: Triangle = {
 			id,
 			coordinates,
-			incenter: computeIncenter(coordinates)
+			incenter,
+			stressVector
 		};
 
-		triangles.push(triangle);
+		triangles[id] = triangle;
 		const points = coordToPoints(coordinates);
 
 		// generate index for easy processing in the future

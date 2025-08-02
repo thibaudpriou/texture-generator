@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { Triangle, Point } from '$lib/compute/mesh/types';
+	import type { Triangle, Point, TrianglesById } from '$lib/compute/mesh/types';
 	import { coordToPoints } from '$lib/compute/mesh/coord-to-points';
 	import { prepareTriangles } from '$lib/compute/mesh/prepare-triangles';
+	import { computeTriangleStressVector } from '$lib/compute/mesh/compute-stress-vector';
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
@@ -17,7 +18,7 @@
 		ctx.stroke();
 	};
 
-	const drawTriangles = (elt: HTMLCanvasElement | undefined, triangles: Triangle[]) => {
+	const drawTriangles = (elt: HTMLCanvasElement | undefined, trianglesById: TrianglesById) => {
 		if (!elt) {
 			return;
 		}
@@ -31,7 +32,8 @@
 		ctx.fillStyle = 'white';
 		ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-		for (const triangle of triangles) {
+		for (const triangleId in trianglesById) {
+			const triangle = trianglesById[triangleId];
 			const { coordinates, incenter } = triangle;
 
 			ctx.strokeStyle = 'black';
@@ -51,11 +53,13 @@
 		}
 	};
 
-	const { trianglesByNodes, triangles } = prepareTriangles({
+	const { trianglesByNodes, trianglesById } = prepareTriangles({
 		width: WIDTH,
 		height: HEIGHT,
-		nbPoints: NB_POINTS
+		nbPoints: NB_POINTS,
+		getStressVector: computeTriangleStressVector
 	});
+
 	/**
 	 * TODO generate cracks with the following algorithm
 	 * - loop on nodes
@@ -66,7 +70,7 @@
 	 */
 
 	$: {
-		drawTriangles(canvasElt, triangles);
+		drawTriangles(canvasElt, trianglesById);
 	}
 </script>
 
