@@ -2,20 +2,14 @@
 	import { createDelaunayMesh } from '$lib/compute/mesh/create-delaunay-mesh';
 	import { computeIncenter } from '$lib/compute/mesh/compute-incenter';
 	import type { Triangle, Point } from '$lib/compute/mesh/types';
+	import { coordToPoints } from '$lib/compute/mesh/coord-to-points';
+	import { prepareTriangle } from '$lib/compute/mesh/prepare-triangle';
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
 	const NB_POINTS = 500;
 
 	let canvasElt: HTMLCanvasElement | undefined;
-
-	const coordToPoints = (coordinates: Triangle['coordinates']): [Point, Point, Point] => {
-		return [
-			[coordinates[0], coordinates[1]],
-			[coordinates[2], coordinates[3]],
-			[coordinates[4], coordinates[5]]
-		];
-	};
 
 	const drawLine = (ctx: CanvasRenderingContext2D, p1: Point, p2: Point) => {
 		ctx.beginPath();
@@ -59,38 +53,15 @@
 		}
 	};
 
-	const delaunayTrianglesCoordinates = createDelaunayMesh(WIDTH, HEIGHT, NB_POINTS);
-
-	const triangles: Triangle[] = [];
-	const pointsByTriangles: Record<`${Point[0]}-${Point[1]}`, Record<Triangle['id'], true>> = {};
-	for (const id in delaunayTrianglesCoordinates) {
-		const coordinates = delaunayTrianglesCoordinates[id];
-		const triangle = {
-			id,
-			coordinates,
-			incenter: computeIncenter(coordinates)
-		};
-
-		triangles.push(triangle);
-		const points = coordToPoints(coordinates);
-
-		// generate index for easy processing in the future
-		const p1Index = `${points[0][0]}-${points[0][1]}` as const;
-		const p2Index = `${points[1][0]}-${points[1][1]}` as const;
-		const p3Index = `${points[2][0]}-${points[2][1]}` as const;
-		if (!pointsByTriangles[p1Index]) {
-			pointsByTriangles[p1Index] = {};
-		}
-		pointsByTriangles[p1Index][p1Index] = true;
-		if (!pointsByTriangles[p2Index]) {
-			pointsByTriangles[p2Index] = {};
-		}
-		pointsByTriangles[p2Index][p2Index] = true;
-		if (!pointsByTriangles[p3Index]) {
-			pointsByTriangles[p3Index] = {};
-		}
-		pointsByTriangles[p3Index][p3Index] = true;
-	}
+	const { nodesByTriangles, triangles } = prepareTriangle(WIDTH, HEIGHT, NB_POINTS);
+	/**
+	 * TODO generate cracks with the following algorithm
+	 * - loop on nodes
+	 * - compute force applied by each triangles. Should include: stress, distance with incenter, direction?
+	 * - generate crack
+	 * 		- split node into multiple nodes, then generate new triangles
+	 * 		- add some stress vector on those (or none, idk)
+	 */
 
 	$: {
 		drawTriangles(canvasElt, triangles);
