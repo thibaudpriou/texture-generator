@@ -1,11 +1,15 @@
-import type { Coord, Triangle } from './types';
+import type { Coord, TriangleCoordinates } from './types';
 import Delaunator from 'delaunator';
 
 /**
  * Randomly generate triangle from rectangle
  *
  */
-export const createDelaunayMesh = (width: number, height: number, nbPoints: number): Triangle[] => {
+export const createDelaunayMesh = (
+	width: number,
+	height: number,
+	nbPoints: number
+): TriangleCoordinates[] => {
 	const points: Coord[] = [0, 0, width, 0, width, height, 0, height]; // 2 subsequent coord for a point
 	for (let i = 0; i < (nbPoints - 1) * 2; i++) {
 		const x = Math.floor(Math.random() * width);
@@ -14,10 +18,13 @@ export const createDelaunayMesh = (width: number, height: number, nbPoints: numb
 	}
 
 	const delaunay = new Delaunator(points);
+	if (!delaunay) {
+		throw new Error('Something happened with Delaunator');
+	}
 
-	const triangles = delaunay.triangles as number[]; // array of point indice
+	const triangles = delaunay.triangles as unknown as Coord[]; // array of point indice
 
-	const result: Triangle[] = [];
+	const result: TriangleCoordinates[] = [];
 	for (let i = 0; i < triangles.length; i += 3) {
 		result.push([
 			points[2 * triangles[i]],

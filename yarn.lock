@@ -1380,6 +1380,11 @@ magic-string@^0.30.11, magic-string@^0.30.17, magic-string@^0.30.5:
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.5.0"
 
+magnitude@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/magnitude/-/magnitude-1.0.0.tgz#93b9904808ac80a058cf80afae97360589c6a8a8"
+  integrity sha512-4ZcvPq8qeXNJW5cxWytAO1sQDzavsWlQCTB8rBeZUvSYgbTVx87r2D9RvOODEIsIN33RsNUD+yG/vUZdyvDYow==
+
 merge2@^1.3.0:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
@@ -1825,6 +1830,13 @@ totalist@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/totalist/-/totalist-3.0.1.tgz#ba3a3d600c915b1a97872348f79c127475f6acf8"
   integrity sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==
+
+triangle-incenter@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/triangle-incenter/-/triangle-incenter-1.0.2.tgz#67e7fda4b382ef755626653a9e442dbef8bc8da0"
+  integrity sha512-oxZhYA0velJ65/Kw4M2Z7jnOIKTiCBCO5wX2D0oqlZ1iulA5Al4hHwCLCT5IMMnUiaLzHfvOoCroPzpg0r38XQ==
+  dependencies:
+    magnitude "^1.0.0"
 
 troika-three-text@^0.52.0, troika-three-text@^0.52.4:
   version "0.52.4"
