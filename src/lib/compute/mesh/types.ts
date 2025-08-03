@@ -11,13 +11,19 @@ export type Triangle = {
 	id: TriangleId;
 	coordinates: TriangleCoordinates;
 	incenter: Point;
-	stressVector: StreeVector;
+	stressVector: StressVector;
 };
 
 export type TrianglesById = Record<TriangleId, Triangle>;
 export type TrianglesByNodes = Record<PointHash, Record<TriangleId, true>>;
 
-/** normalized value [0, 1[ */
-export type StreeVector = number;
+export type StressVector = {
+	/** normalized value [0, 1[ */
+	value: number;
 
-export type ComputeStressFn = (triangle: Pick<Triangle, 'coordinates' | 'incenter'>) => StreeVector;
+	isCracked?: boolean;
+};
+
+export type ComputeStressFn = (
+	triangle: Pick<Triangle, 'coordinates' | 'incenter'>
+) => StressVector;

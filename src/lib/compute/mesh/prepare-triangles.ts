@@ -21,7 +21,7 @@ export const addTriangles = (
 		trianglesById: TrianglesById;
 		trianglesByNodes: TrianglesByNodes;
 	},
-	getStressVector: ComputeStressFn = () => 0
+	getStressVector: ComputeStressFn
 ) => {
 	for (const index in triangleCoordinates) {
 		const coordinates = triangleCoordinates[index];

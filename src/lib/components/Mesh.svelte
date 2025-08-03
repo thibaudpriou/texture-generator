@@ -5,10 +5,12 @@
 	import { computeTriangleStressVector } from '$lib/compute/mesh/compute-stress-vector';
 	import { simulateCracks } from '$lib/compute/mesh/simulate-cracks';
 	import Page from '../../routes/+page.svelte';
+	import { onMount } from 'svelte';
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
-	const NB_POINTS = 5;
+	const NB_POINTS = 50;
+	const GENERATION_SPEED = 50; // ms
 
 	let canvasElt: HTMLCanvasElement | undefined;
 
@@ -42,7 +44,7 @@
 			const triangle = trianglesById[triangleId];
 			const { coordinates, incenter, stressVector } = triangle;
 
-			ctx.strokeStyle = 'black';
+			ctx.strokeStyle = stressVector.isCracked ? 'black' : 'black';
 			const points = coordToPoints(coordinates);
 			ctx.beginPath();
 			ctx.moveTo(...points[0]);
@@ -52,9 +54,8 @@
 			ctx.stroke();
 
 			// draw incenters
-			// const isCracked = stressVector === 0; // ! DEBUG
-			// if (!isCracked) continue; // ! DEBUG ONLY
-			// ctx.strokeStyle = isCracked ? 'red' : 'lightblue';
+			// if (!stressVector.isCracked) continue; // ! DEBUG ONLY
+			// ctx.strokeStyle = 'lightblue';
 			// drawLine(ctx, incenter, points[0]);
 			// drawLine(ctx, incenter, points[1]);
 			// drawLine(ctx, incenter, points[2]);
@@ -70,8 +71,9 @@
 
 	let nbSimulation = 0;
 
-	$: createCracks = () => {
-		data = simulateCracks(data, ++nbSimulation);
+	const createCracks = () => {
+		++nbSimulation;
+		data = simulateCracks(data);
 	};
 
 	/**
@@ -83,6 +85,22 @@
 	 * 		- add some stress vector on those (or none, idk)
 	 */
 
+	let intervalId: ReturnType<typeof setInterval> | undefined = undefined;
+	onMount(() => {
+		// startCrackGeneration()
+	});
+
+	const startCrackGeneration = () => {
+		intervalId = setInterval(createCracks, GENERATION_SPEED);
+	};
+
+	const stopCrackGeneration = () => {
+		if (intervalId) {
+			clearInterval(intervalId);
+		}
+		intervalId = undefined;
+	};
+
 	$: {
 		drawTriangles(canvasElt, data.trianglesById, nbSimulation);
 	}
@@ -90,7 +108,15 @@
 
 <div class="canvas-container">
 	<canvas width={WIDTH} height={HEIGHT} bind:this={canvasElt}></canvas>
-	<button on:click={createCracks}>create cracks (simulation #{nbSimulation + 1})</button>
+	<div>
+		<button on:click={createCracks} disabled={!!intervalId}
+			>next (simulation #{nbSimulation + 1})</button
+		>
+	</div>
+	<div>
+		<button on:click={startCrackGeneration}>auto pattern generation</button>
+		<button on:click={stopCrackGeneration}>stop</button>
+	</div>
 </div>
 
 <style>

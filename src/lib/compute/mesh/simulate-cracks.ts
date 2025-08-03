@@ -1,3 +1,4 @@
+import { VERBOSE } from '$lib/constants';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
 import { getTriangleId } from './get-triangle-id';
@@ -8,6 +9,7 @@ import type {
 	ComputeStressFn,
 	Point,
 	PointHash,
+	StressVector,
 	Triangle,
 	TriangleId,
 	TrianglesById,
@@ -29,7 +31,7 @@ type Stress = {
  * TODO use distance to incenter? closer triangles should apply more force
  */
 const computeStress = (node: Point, triangles: Triangle[]): Stress | null => {
-	const sum = triangles.reduce((sum, triangle) => sum + triangle.stressVector, 0);
+	const sum = triangles.reduce((sum, triangle) => sum + triangle.stressVector.value, 0);
 
 	/**
 	 * new node is placed in the direction of the incenter of the 1st triangle
@@ -85,7 +87,9 @@ export const simulateCracks = (data: {
 	const stressByNodes = getPressuredNodes(data);
 
 	// ! DEBUG ONLY
-	console.log('stress computed', stressByNodes, JSON.parse(JSON.stringify(data)));
+	if (VERBOSE) {
+		console.log('stress computed', stressByNodes, JSON.parse(JSON.stringify(data)));
+	}
 
 	// nominate nodes to crack: maximum stress
 	let maxPressuredNode: { stress: Stress; nodeId: PointHash } | undefined = undefined;
@@ -148,12 +152,14 @@ export const simulateCracks = (data: {
 	// const newTrianglesNodes = [newNode, ...impactedNodesIds.keys().map(getPointFromHash)];
 
 	// ! DEBUG ONLY
-	console.log(
-		'before re-meshing',
-		maxPressuredNode,
-		JSON.parse(JSON.stringify(data)),
-		newTrianglesNodes
-	);
+	if (VERBOSE) {
+		console.log(
+			'before re-meshing',
+			maxPressuredNode,
+			JSON.parse(JSON.stringify(data)),
+			newTrianglesNodes
+		);
+	}
 
 	const newTrianglesCoordinates = createDelaunayMesh(newTrianglesNodes.flat());
 	const getStressVector: ComputeStressFn = (triangle) => {
@@ -161,7 +167,10 @@ export const simulateCracks = (data: {
 		const found = data.trianglesById[id];
 
 		// new triangles get 0
-		return found ? found.stressVector : Math.random() * 0.5; // TODO change stress vector for new triangles
+		return {
+			value: found?.stressVector.value ?? Math.random() * 0.5, // TODO change stress vector for new triangles
+			isCracked: found ? found.stressVector.isCracked : true
+		} satisfies StressVector;
 	};
 
 	const newData = {
@@ -171,13 +180,15 @@ export const simulateCracks = (data: {
 	addTriangles(newTrianglesCoordinates, newData, getStressVector);
 
 	// ! DEBUG ONLY
-	console.log(
-		'after re-meshing',
-		maxPressuredNode,
-		JSON.parse(JSON.stringify(newData)),
-		newTrianglesNodes.length,
-		newTrianglesNodes
-	);
+	if (VERBOSE) {
+		console.log(
+			'after re-meshing',
+			maxPressuredNode,
+			JSON.parse(JSON.stringify(newData)),
+			newTrianglesNodes.length,
+			newTrianglesNodes
+		);
+	}
 
 	return newData;
 };
