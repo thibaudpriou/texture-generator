@@ -70,14 +70,21 @@
 		}
 	};
 
-	let data = prepareTriangles({
-		width: WIDTH,
-		height: HEIGHT,
-		nbPoints: NB_POINTS,
-		getStressVector: computeTriangleStressVector
-	});
+	const initData = () =>
+		prepareTriangles({
+			width: WIDTH,
+			height: HEIGHT,
+			nbPoints: NB_POINTS,
+			getStressVector: computeTriangleStressVector
+		});
 
+	let data = initData();
 	let nbSimulation = 0;
+
+	const reset = () => {
+		data = initData();
+		nbSimulation = 0;
+	};
 
 	const createCracks = () => {
 		++nbSimulation;
@@ -124,6 +131,9 @@
 	<div>
 		<button on:click={startCrackGeneration}>auto pattern generation</button>
 		<button on:click={stopCrackGeneration}>stop</button>
+	</div>
+	<div>
+		<button on:click={reset}>reset</button>
 	</div>
 </div>
 
