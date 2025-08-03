@@ -1,8 +1,63 @@
 import { computeIncenter } from './compute-incenter';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
+import { generatePointsCoordinates } from './generate-points-coordinates';
 import { hashPoint } from './hash-point';
-import type { Triangle, StreeVector, TrianglesById, TrianglesByNodes } from './types';
+import type {
+	Triangle,
+	StreeVector,
+	TrianglesById,
+	TrianglesByNodes,
+	TriangleCoordinates,
+	TriangleId
+} from './types';
+
+/**
+ * Mutates @param memory to add given triangles
+ */
+export const addTriangles = (
+	triangleCoordinates: TriangleCoordinates[],
+	memory: {
+		trianglesById: TrianglesById;
+		trianglesByNodes: TrianglesByNodes;
+	},
+	getTriangleId: (index: string) => TriangleId = (index) => index,
+	getStressVector: (triangle: Pick<Triangle, 'coordinates' | 'incenter'>) => StreeVector = () => 0
+) => {
+	for (const index in triangleCoordinates) {
+		const coordinates = triangleCoordinates[index];
+		const incenter = computeIncenter(coordinates);
+		const stressVector = getStressVector({ coordinates, incenter });
+
+		const id = getTriangleId(index);
+		const triangle: Triangle = {
+			id,
+			coordinates,
+			incenter,
+			stressVector
+		};
+
+		memory.trianglesById[id] = triangle;
+		const points = coordToPoints(coordinates);
+
+		// generate index for easy processing in the future
+		const p1Index = hashPoint(points[0]);
+		const p2Index = hashPoint(points[1]);
+		const p3Index = hashPoint(points[2]);
+		if (!memory.trianglesByNodes[p1Index]) {
+			memory.trianglesByNodes[p1Index] = {};
+		}
+		memory.trianglesByNodes[p1Index][id] = true;
+		if (!memory.trianglesByNodes[p2Index]) {
+			memory.trianglesByNodes[p2Index] = {};
+		}
+		memory.trianglesByNodes[p2Index][id] = true;
+		if (!memory.trianglesByNodes[p3Index]) {
+			memory.trianglesByNodes[p3Index] = {};
+		}
+		memory.trianglesByNodes[p3Index][id] = true;
+	}
+};
 
 export const prepareTriangles = ({
 	width,
@@ -19,48 +74,14 @@ export const prepareTriangles = ({
 	trianglesByNodes: TrianglesByNodes;
 } => {
 	// create triangles
-	const delaunayTrianglesCoordinates = createDelaunayMesh(width, height, nbPoints);
+	const coords = generatePointsCoordinates({ width, height, nbPoints });
+	const triangleCoordinates = createDelaunayMesh(coords);
 
-	const trianglesById: TrianglesById = {};
-	const trianglesByNodes: TrianglesByNodes = {};
-	for (const index in delaunayTrianglesCoordinates) {
-		const coordinates = delaunayTrianglesCoordinates[index];
-		const incenter = computeIncenter(coordinates);
-		const stressVector = getStressVector({ coordinates, incenter });
-
-		const id = index;
-		const triangle: Triangle = {
-			id,
-			coordinates,
-			incenter,
-			stressVector
-		};
-
-		trianglesById[id] = triangle;
-		const points = coordToPoints(coordinates);
-
-		// generate index for easy processing in the future
-		const p1Index = hashPoint(points[0]);
-		const p2Index = hashPoint(points[1]);
-		const p3Index = hashPoint(points[2]);
-		if (!trianglesByNodes[p1Index]) {
-			trianglesByNodes[p1Index] = {};
-		}
-		trianglesByNodes[p1Index][id] = true;
-		if (!trianglesByNodes[p2Index]) {
-			trianglesByNodes[p2Index] = {};
-		}
-		trianglesByNodes[p2Index][id] = true;
-		if (!trianglesByNodes[p3Index]) {
-			trianglesByNodes[p3Index] = {};
-		}
-		trianglesByNodes[p3Index][id] = true;
-	}
-
-	// TODO init stress vector to each triangle
-
-	return {
-		trianglesByNodes,
-		trianglesById
+	const memory = {
+		trianglesById: {} as TrianglesById,
+		trianglesByNodes: {} as TrianglesByNodes
 	};
+	addTriangles(triangleCoordinates, memory, undefined, getStressVector);
+
+	return memory;
 };

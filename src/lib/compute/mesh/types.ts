@@ -1,7 +1,7 @@
 export type Coord = number;
 
 /** [ v1.x, v1.y ] */
-export type Point = [Coord, Coord]; //
+export type Point = [Coord, Coord];
 export type PointHash = `${Point[0]}-${Point[1]}`;
 
 /** [ v1.x, v1.y, v2.x, v2.y, v3.x, v3.y ] */
@@ -10,7 +10,7 @@ export type TriangleId = string;
 export type Triangle = {
 	id: TriangleId;
 	coordinates: TriangleCoordinates;
-	incenter: [Coord, Coord];
+	incenter: Point;
 	stressVector: StreeVector;
 };
 

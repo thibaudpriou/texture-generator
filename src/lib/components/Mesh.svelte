@@ -3,10 +3,12 @@
 	import { coordToPoints } from '$lib/compute/mesh/coord-to-points';
 	import { prepareTriangles } from '$lib/compute/mesh/prepare-triangles';
 	import { computeTriangleStressVector } from '$lib/compute/mesh/compute-stress-vector';
+	import { simulateCracks } from '$lib/compute/mesh/simulate-cracks';
+	import Page from '../../routes/+page.svelte';
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
-	const NB_POINTS = 500;
+	const NB_POINTS = 10;
 
 	let canvasElt: HTMLCanvasElement | undefined;
 
@@ -34,7 +36,7 @@
 
 		for (const triangleId in trianglesById) {
 			const triangle = trianglesById[triangleId];
-			const { coordinates, incenter } = triangle;
+			const { coordinates, incenter, stressVector } = triangle;
 
 			ctx.strokeStyle = 'black';
 			const points = coordToPoints(coordinates);
@@ -46,19 +48,27 @@
 			ctx.stroke();
 
 			// draw incenters
-			ctx.strokeStyle = 'lightblue';
-			drawLine(ctx, incenter, points[0]);
-			drawLine(ctx, incenter, points[1]);
-			drawLine(ctx, incenter, points[2]);
+			// const isCracked = stressVector === 0; // ! DEBUG
+			// if (!isCracked) continue; // ! DEBUG ONLY
+			// ctx.strokeStyle = isCracked ? 'red' : 'lightblue';
+			// drawLine(ctx, incenter, points[0]);
+			// drawLine(ctx, incenter, points[1]);
+			// drawLine(ctx, incenter, points[2]);
 		}
 	};
 
-	const { trianglesByNodes, trianglesById } = prepareTriangles({
+	let data = prepareTriangles({
 		width: WIDTH,
 		height: HEIGHT,
 		nbPoints: NB_POINTS,
 		getStressVector: computeTriangleStressVector
 	});
+
+	let nbSimulation = 0;
+
+	$: createCracks = () => {
+		data = simulateCracks(data, ++nbSimulation);
+	};
 
 	/**
 	 * TODO generate cracks with the following algorithm
@@ -70,12 +80,13 @@
 	 */
 
 	$: {
-		drawTriangles(canvasElt, trianglesById);
+		drawTriangles(canvasElt, data.trianglesById);
 	}
 </script>
 
 <div class="canvas-container">
 	<canvas width={WIDTH} height={HEIGHT} bind:this={canvasElt}></canvas>
+	<button on:click={createCracks}>create cracks (simulation #{nbSimulation + 1})</button>
 </div>
 
 <style>

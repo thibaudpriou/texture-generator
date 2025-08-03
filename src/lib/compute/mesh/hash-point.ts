@@ -6,3 +6,5 @@ export const decryptHash = (hash: PointHash): Point => {
 	const coords = hash.split('-') as [string, string];
 	return [Number(coords[0]), Number(coords[1])];
 };
+
+export const getPointFromHash = decryptHash;
