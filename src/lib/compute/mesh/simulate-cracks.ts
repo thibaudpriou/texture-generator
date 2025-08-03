@@ -1,8 +1,11 @@
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
+import { getTriangleId } from './get-triangle-id';
 import { decryptHash, getPointFromHash, hashPoint } from './hash-point';
 import { addTriangles } from './prepare-triangles';
+import { sanitizeCoord } from './sanitize-coord';
 import type {
+	ComputeStressFn,
 	Point,
 	PointHash,
 	Triangle,
@@ -39,7 +42,7 @@ const computeStress = (node: Point, triangles: Triangle[]): Stress | null => {
 
 	return {
 		value: sum / triangles.length,
-		newNode: [newNodeX, newNodeY]
+		newNode: [sanitizeCoord(newNodeX), sanitizeCoord(newNodeY)]
 	};
 };
 
@@ -75,14 +78,14 @@ const getPressuredNodes = ({
 /**
  * Mutates given data to add cracks
  */
-export const simulateCracks = (
-	data: {
-		trianglesById: TrianglesById;
-		trianglesByNodes: TrianglesByNodes;
-	},
-	iterationNb: number
-) => {
+export const simulateCracks = (data: {
+	trianglesById: TrianglesById;
+	trianglesByNodes: TrianglesByNodes;
+}) => {
 	const stressByNodes = getPressuredNodes(data);
+
+	// ! DEBUG ONLY
+	console.log('stress computed', stressByNodes, JSON.parse(JSON.stringify(data)));
 
 	// nominate nodes to crack: maximum stress
 	let maxPressuredNode: { stress: Stress; nodeId: PointHash } | undefined = undefined;
@@ -112,9 +115,7 @@ export const simulateCracks = (
 	 * - create more points?
 	 */
 
-	// ! DEBUG ONLY
-	console.log('before removal', maxPressuredNode, JSON.parse(JSON.stringify(data)));
-
+	// ! <DEBUG> removal useless for now: we re-mesh everything
 	const impactedNodesIds = new Set<PointHash>();
 	const deleteTriangle = (triangleId: TriangleId) => {
 		const triangle = data.trianglesById[triangleId];
@@ -124,6 +125,7 @@ export const simulateCracks = (
 			impactedNodesIds.add(nodeId);
 			delete data.trianglesByNodes[nodeId][triangleId];
 		}
+		delete data.trianglesById[triangleId];
 	};
 
 	// remove old triangles around this node
@@ -135,20 +137,15 @@ export const simulateCracks = (
 	for (const triangleId of trianglesIds) {
 		deleteTriangle(triangleId);
 	}
-
-	// ! DEBUG ONLY
-	console.log(
-		'after removal',
-		maxPressuredNode,
-		JSON.parse(JSON.stringify(data)),
-		impactedNodesIds
-	);
+	// ! </DEBUG>
 
 	// add new node
 	data.trianglesByNodes[nodeId] = {};
 
 	// compute new triangles with Delaunay
-	const newTrianglesNodes = [newNode, ...impactedNodesIds.keys().map(getPointFromHash)];
+	const existingNodeIds = Object.keys(data.trianglesByNodes) as PointHash[];
+	const newTrianglesNodes = [newNode, ...existingNodeIds.map(getPointFromHash)];
+	// const newTrianglesNodes = [newNode, ...impactedNodesIds.keys().map(getPointFromHash)];
 
 	// ! DEBUG ONLY
 	console.log(
@@ -159,17 +156,27 @@ export const simulateCracks = (
 	);
 
 	const newTrianglesCoordinates = createDelaunayMesh(newTrianglesNodes.flat());
-	const getStressVector = () => 0; // TODO relaxation step: edit stress vector instead of hard reset
-	const getTriangleId = (index: string) => `${iterationNb}-${index}`; // make sure to have unique ids
-	addTriangles(newTrianglesCoordinates, data, getTriangleId, getStressVector);
+	const getStressVector: ComputeStressFn = (triangle) => {
+		const id = getTriangleId(triangle);
+		const found = data.trianglesById[id];
+
+		// new triangles get 0
+		return found ? found.stressVector : 0;
+	};
+
+	const newData = {
+		trianglesById: {},
+		trianglesByNodes: {}
+	};
+	addTriangles(newTrianglesCoordinates, newData, getStressVector);
 
 	// ! DEBUG ONLY
 	console.log(
 		'after re-meshing',
 		maxPressuredNode,
-		JSON.parse(JSON.stringify(data)),
+		JSON.parse(JSON.stringify(newData)),
 		newTrianglesNodes
 	);
 
-	return data;
+	return newData;
 };

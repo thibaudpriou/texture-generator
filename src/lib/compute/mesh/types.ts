@@ -19,3 +19,5 @@ export type TrianglesByNodes = Record<PointHash, Record<TriangleId, true>>;
 
 /** normalized value [0, 1[ */
 export type StreeVector = number;
+
+export type ComputeStressFn = (triangle: Pick<Triangle, 'coordinates' | 'incenter'>) => StreeVector;

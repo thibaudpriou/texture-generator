@@ -8,7 +8,7 @@
 
 	const WIDTH = 500;
 	const HEIGHT = 500;
-	const NB_POINTS = 10;
+	const NB_POINTS = 5;
 
 	let canvasElt: HTMLCanvasElement | undefined;
 
@@ -20,7 +20,11 @@
 		ctx.stroke();
 	};
 
-	const drawTriangles = (elt: HTMLCanvasElement | undefined, trianglesById: TrianglesById) => {
+	const drawTriangles = (
+		elt: HTMLCanvasElement | undefined,
+		trianglesById: TrianglesById,
+		simulationNb: number
+	) => {
 		if (!elt) {
 			return;
 		}
@@ -80,7 +84,7 @@
 	 */
 
 	$: {
-		drawTriangles(canvasElt, data.trianglesById);
+		drawTriangles(canvasElt, data.trianglesById, nbSimulation);
 	}
 </script>
 
