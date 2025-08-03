@@ -161,7 +161,7 @@ export const simulateCracks = (data: {
 		const found = data.trianglesById[id];
 
 		// new triangles get 0
-		return found ? found.stressVector : 0;
+		return found ? found.stressVector : Math.random() * 0.5; // TODO change stress vector for new triangles
 	};
 
 	const newData = {
@@ -175,6 +175,7 @@ export const simulateCracks = (data: {
 		'after re-meshing',
 		maxPressuredNode,
 		JSON.parse(JSON.stringify(newData)),
+		newTrianglesNodes.length,
 		newTrianglesNodes
 	);
 
