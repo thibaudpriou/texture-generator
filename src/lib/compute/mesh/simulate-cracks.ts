@@ -86,6 +86,40 @@ const getPressuredNodes = ({
 
 /**
  * Mutates given data to add cracks
+ *
+ * Ubiquitous language:
+ * - cracking node: a node selected for the crack generation
+ * - cracked node: a newly-created node
+ * - cracked triangle: a triangle that has both cracked and cracking nodes among their vertices
+ * - nearby triangle of given node: a triangle where node is a vertex
+ * - stress vector of a triangle:
+ * 		- represented by its value
+ * 		- exerts 3 forces on its 3 respective vertices
+ * TODO	- for a given vertex, the force strength is given by (incenterDistance * value)
+ *
+ * TODO @tpriou don't override this algorithm: create new function instead
+ *
+ * Current crack algorithm:
+ * - select a cracking node using nearby triangle's stress vectors
+ * 		- using the stress vector field of all nearby triangles
+ * - create cracked node
+ * 		- toward the incenter of the most stressful nearby triangle
+ * 		- [alt algo]: sum of all the stress vectors
+ * - [hack] re-compute Delaunay mesh using every existing nodes + cracked node
+ *
+ *
+ * TODO Aternative algorithm:
+ * - for every "crack candidate" node (aka "cracking")
+ * - select a triangle (e.g. the ones with stress > threshold). You can limit the number of selected triangles
+ *    - at least 1
+ *    - 20% chance of 2: split crack probability
+ *    - 3? 4? etc
+ * - create a node there (using incenter?) aka the "cracked" node
+ * - delete this triangle + create 3 new triangles with the new node":
+ *    - 2 of them are cracked triangles, i.e. 2 of their vertices are the cracking and the cracked
+ *    - add lots of stress there to allow crack expansion
+ * - relax stress on every other triangle
+ * - exclude the cracking and cracked to pressured nodes
  */
 export const simulateCracks = (data: {
 	trianglesById: TrianglesById;
