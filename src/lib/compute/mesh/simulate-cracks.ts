@@ -1,4 +1,4 @@
-import { VERBOSE } from '$lib/constants';
+import { MATERIAL_TOUGHNESS, VERBOSE } from '$lib/constants';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
 import { getTriangleId } from './get-triangle-id';
@@ -34,13 +34,20 @@ const computeStress = (node: Point, triangles: Triangle[]): Stress | null => {
 	const sum = triangles.reduce((sum, triangle) => sum + triangle.stressVector.value, 0);
 
 	/**
-	 * new node is placed in the direction of the incenter of the 1st triangle
+	 * new node is placed in the direction of the incenter of some triangle
 	 * TODO add more nodes? use all triangles to infer direction?
 	 */
-	const directionRatio = 0.5; // TODO use better heuristic
-	const firstTriangleIncenter = triangles[0].incenter;
-	const newNodeX = (firstTriangleIncenter[0] - node[0]) * directionRatio + node[0];
-	const newNodeY = (firstTriangleIncenter[1] - node[1]) * directionRatio + node[1];
+	const directionRatio = MATERIAL_TOUGHNESS; // TODO use better heuristic
+
+	let mostStressfullTriangle = triangles[0];
+	for (const triangle of triangles) {
+		if (mostStressfullTriangle.stressVector.value < triangle.stressVector.value) {
+			mostStressfullTriangle = triangle;
+		}
+	}
+
+	const newNodeX = (mostStressfullTriangle.incenter[0] - node[0]) * directionRatio + node[0];
+	const newNodeY = (mostStressfullTriangle.incenter[1] - node[1]) * directionRatio + node[1];
 
 	return {
 		value: sum / triangles.length,

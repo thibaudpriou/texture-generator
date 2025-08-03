@@ -6,11 +6,7 @@
 	import { simulateCracks } from '$lib/compute/mesh/simulate-cracks';
 	import Page from '../../routes/+page.svelte';
 	import { onMount } from 'svelte';
-
-	const WIDTH = 500;
-	const HEIGHT = 500;
-	const NB_POINTS = 50;
-	const GENERATION_SPEED = 50; // ms
+	import { AUTO_GENERATION_SPEED, HEIGHT, NB_POINTS, WIDTH } from '$lib/constants';
 
 	let canvasElt: HTMLCanvasElement | undefined;
 
@@ -45,6 +41,7 @@
 			const { coordinates, incenter, stressVector } = triangle;
 
 			ctx.strokeStyle = stressVector.isCracked ? 'black' : 'black';
+			// ctx.fillStyle = `rgba(255, 0, 0, ${stressVector.value})`;
 			const points = coordToPoints(coordinates);
 			ctx.beginPath();
 			ctx.moveTo(...points[0]);
@@ -52,6 +49,7 @@
 			ctx.lineTo(...points[2]);
 			ctx.closePath();
 			ctx.stroke();
+			// ctx.fill();
 
 			// draw incenters
 			// if (!stressVector.isCracked) continue; // ! DEBUG ONLY
@@ -91,7 +89,7 @@
 	});
 
 	const startCrackGeneration = () => {
-		intervalId = setInterval(createCracks, GENERATION_SPEED);
+		intervalId = setInterval(createCracks, AUTO_GENERATION_SPEED);
 	};
 
 	const stopCrackGeneration = () => {
