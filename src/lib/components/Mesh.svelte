@@ -6,13 +6,7 @@
 	import { simulateCracks } from '$lib/compute/mesh/simulate-cracks';
 	import Page from '../../routes/+page.svelte';
 	import { onMount } from 'svelte';
-	import {
-		AUTO_GENERATION_SPEED,
-		DISPLAY_STRESS_VECTORS,
-		HEIGHT,
-		NB_POINTS,
-		WIDTH
-	} from '$lib/constants';
+	import { AUTO_GENERATION_SPEED, HEIGHT, NB_POINTS, WIDTH } from '$lib/constants';
 
 	let canvasElt: HTMLCanvasElement | undefined;
 
@@ -27,7 +21,7 @@
 	const drawTriangles = (
 		elt: HTMLCanvasElement | undefined,
 		trianglesById: TrianglesById,
-		simulationNb: number
+		displayStressVectors?: boolean
 	) => {
 		if (!elt) {
 			return;
@@ -47,7 +41,7 @@
 			const { coordinates, incenter, stressVector } = triangle;
 
 			ctx.strokeStyle = stressVector.isCracked ? 'black' : 'black';
-			if (DISPLAY_STRESS_VECTORS) {
+			if (displayStressVectors) {
 				ctx.fillStyle = `rgba(255, 0, 0, ${stressVector.value})`;
 			}
 			const points = coordToPoints(coordinates);
@@ -57,7 +51,7 @@
 			ctx.lineTo(...points[2]);
 			ctx.closePath();
 			ctx.stroke();
-			if (DISPLAY_STRESS_VECTORS) {
+			if (displayStressVectors) {
 				ctx.fill();
 			}
 
@@ -80,6 +74,7 @@
 
 	let data = initData();
 	let nbSimulation = 0;
+	let displayStressVectors = false;
 
 	const reset = () => {
 		data = initData();
@@ -117,7 +112,7 @@
 	};
 
 	$: {
-		drawTriangles(canvasElt, data.trianglesById, nbSimulation);
+		drawTriangles(canvasElt, data.trianglesById, displayStressVectors);
 	}
 </script>
 
@@ -134,6 +129,13 @@
 	</div>
 	<div>
 		<button on:click={reset}>reset</button>
+	</div>
+	<div>
+		<button
+			on:click={() => {
+				displayStressVectors = !displayStressVectors;
+			}}>display stress</button
+		>
 	</div>
 </div>
 

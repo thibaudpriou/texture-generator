@@ -1,5 +1,4 @@
 export const VERBOSE = false;
-export const DISPLAY_STRESS_VECTORS = false;
 
 export const WIDTH = 500;
 export const HEIGHT = 500;
