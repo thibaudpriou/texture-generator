@@ -32,11 +32,14 @@ const computeDistanceToIncenter = (node: Point, triangle: Triangle) => {
  * - the force applied by given triangle
  * - material toughness
  */
-const computeCrackedPoint = (node: Point, triangle: Triangle, normalizedStress: number): Point => {
+const computeCrackedNode = (node: Point, triangle: Triangle, normalizedStress: number): Point => {
 	const directionRatio = MATERIAL_TOUGHNESS; // TODO use better heuristic?
 
-	const newNodeX = (triangle.incenter[0] - node[0]) * directionRatio * normalizedStress + node[0];
-	const newNodeY = (triangle.incenter[1] - node[1]) * directionRatio * normalizedStress + node[1];
+	const translateX = (triangle.incenter[0] - node[0]) * directionRatio * normalizedStress;
+	const newNodeX = translateX + node[0];
+	const translateY = (triangle.incenter[1] - node[1]) * directionRatio * normalizedStress;
+	const newNodeY = translateY + node[1];
+	// TODO do something if translation is too small: don't create cracked point
 
 	return [sanitizeCoord(newNodeX), sanitizeCoord(newNodeY)];
 };
@@ -72,7 +75,7 @@ const computeStressForNode = (node: Point, triangles: Triangle[]): Stress => {
 
 	const normalizedStressValue = stressValue / distanceMax / triangles.length;
 
-	const crackedNode = computeCrackedPoint(node, mostStressfullTriangle, normalizedStressValue);
+	const crackedNode = computeCrackedNode(node, mostStressfullTriangle, normalizedStressValue);
 
 	return {
 		value: normalizedStressValue,
