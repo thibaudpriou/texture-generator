@@ -1,4 +1,4 @@
-import { HEIGHT, MATERIAL_TOUGHNESS, VERBOSE, WIDTH } from '$lib/constants';
+import { MATERIAL_TOUGHNESS, VERBOSE } from '$lib/constants';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
 import { getTriangleId } from './get-triangle-id';
@@ -21,13 +21,10 @@ type Stress = {
 	crackedNode: Point;
 };
 
-const MAX_DISTANCE_SQUARED = WIDTH ** 2 + HEIGHT ** 2;
-
-const computeRelativeStress = (node: Point, triangle: Triangle) => {
+const computeDistanceToIncenter = (node: Point, triangle: Triangle) => {
 	const distanceSquared =
 		(triangle.incenter[0] - node[0]) ** 2 + (triangle.incenter[1] - node[1]) ** 2;
-	const distanceNormalized = distanceSquared / MAX_DISTANCE_SQUARED;
-	return distanceNormalized * triangle.stressVector.value;
+	return Math.abs(distanceSquared);
 };
 
 /**
@@ -35,11 +32,11 @@ const computeRelativeStress = (node: Point, triangle: Triangle) => {
  * - the force applied by given triangle
  * - material toughness
  */
-const computeCrackedPoint = (node: Point, triangle: Triangle, relativeForce: number): Point => {
+const computeCrackedPoint = (node: Point, triangle: Triangle, normalizedStress: number): Point => {
 	const directionRatio = MATERIAL_TOUGHNESS; // TODO use better heuristic?
 
-	const newNodeX = (triangle.incenter[0] - node[0]) * directionRatio * relativeForce + node[0];
-	const newNodeY = (triangle.incenter[1] - node[1]) * directionRatio * relativeForce + node[1];
+	const newNodeX = (triangle.incenter[0] - node[0]) * directionRatio * normalizedStress + node[0];
+	const newNodeY = (triangle.incenter[1] - node[1]) * directionRatio * normalizedStress + node[1];
 
 	return [sanitizeCoord(newNodeX), sanitizeCoord(newNodeY)];
 };
@@ -51,29 +48,31 @@ const computeCrackedPoint = (node: Point, triangle: Triangle, relativeForce: num
  * - for each triangle
  * 		- compute stress applied to node: (distanceToIncenter * value)
  * - normalize
+ * - cracked node is placed in the direction of the most stressful triangle's incenter
+ *
+ * TODO add more nodes? use all triangles to infer direction?
  */
 const computeStressForNode = (node: Point, triangles: Triangle[]): Stress => {
-	const stressValue = triangles.reduce(
-		(sum, triangle) => sum + computeRelativeStress(node, triangle),
-		0
-	);
-	const normalizedStressValue = stressValue / triangles.length;
-
-	/**
-	 * new node is placed in the direction of the incenter of some triangle
-	 * TODO add more nodes? use all triangles to infer direction?
-	 */
+	let stressValue = 0;
 	let mostStressfullTriangle = triangles[0];
-	let forceMax = computeRelativeStress(node, mostStressfullTriangle);
+	let distanceMax = computeDistanceToIncenter(node, triangles[0]);
+	let forceMax = distanceMax * triangles[0].stressVector.value;
 	for (const triangle of triangles) {
-		const force = computeRelativeStress(node, triangle);
+		const distance = computeDistanceToIncenter(node, triangle);
+		const force = distance * triangle.stressVector.value;
+		stressValue += force;
 		if (forceMax < force) {
 			mostStressfullTriangle = triangle;
 			forceMax = force;
 		}
+		if (distanceMax < distance) {
+			distanceMax = distance;
+		}
 	}
 
-	const crackedNode = computeCrackedPoint(node, mostStressfullTriangle, forceMax);
+	const normalizedStressValue = stressValue / distanceMax / triangles.length;
+
+	const crackedNode = computeCrackedPoint(node, mostStressfullTriangle, normalizedStressValue);
 
 	return {
 		value: normalizedStressValue,
