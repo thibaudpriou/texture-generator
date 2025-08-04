@@ -1,4 +1,4 @@
-import { MATERIAL_TOUGHNESS, VERBOSE } from '$lib/constants';
+import { HEIGHT, MATERIAL_TOUGHNESS, VERBOSE, WIDTH } from '$lib/constants';
 import { coordToPoints } from './coord-to-points';
 import { createDelaunayMesh } from './create-delaunay-mesh';
 import { getTriangleId } from './get-triangle-id';
@@ -21,37 +21,63 @@ type Stress = {
 	newNode: Point;
 };
 
+const MAX_DISTANCE_SQUARED = WIDTH ** 2 + HEIGHT ** 2;
+
+const computeRelativeStress = (node: Point, triangle: Triangle) => {
+	const distanceSquared =
+		(triangle.incenter[0] - node[0]) ** 2 + (triangle.incenter[1] - node[1]) ** 2;
+	const distanceNormalized = distanceSquared / MAX_DISTANCE_SQUARED;
+	return distanceNormalized * triangle.stressVector.value;
+};
+
+/**
+ * Cracked point is relative to:
+ * - the force applied by given triangle
+ * - material toughness
+ */
+const computeCrackedPoint = (node: Point, triangle: Triangle, relativeForce: number): Point => {
+	const directionRatio = MATERIAL_TOUGHNESS; // TODO use better heuristic?
+
+	const newNodeX = (triangle.incenter[0] - node[0]) * directionRatio * relativeForce + node[0];
+	const newNodeY = (triangle.incenter[1] - node[1]) * directionRatio * relativeForce + node[1];
+
+	return [sanitizeCoord(newNodeX), sanitizeCoord(newNodeY)];
+};
+
 /**
  * Compute stress force applied on given node
  *
  * Curent algorithm:
- * - sum all of its triangles stress
+ * - for each triangle
+ * 		- compute stress applied to node: (distanceToIncenter * value)
  * - normalize
- *
- * TODO use distance to incenter? closer triangles should apply more force
  */
-const computeStress = (node: Point, triangles: Triangle[]): Stress | null => {
-	const sum = triangles.reduce((sum, triangle) => sum + triangle.stressVector.value, 0);
+const computeStressForNode = (node: Point, triangles: Triangle[]): Stress => {
+	const stressValue = triangles.reduce(
+		(sum, triangle) => sum + computeRelativeStress(node, triangle),
+		0
+	);
+	const normalizedStressValue = stressValue / triangles.length;
 
 	/**
 	 * new node is placed in the direction of the incenter of some triangle
 	 * TODO add more nodes? use all triangles to infer direction?
 	 */
-	const directionRatio = MATERIAL_TOUGHNESS; // TODO use better heuristic
-
 	let mostStressfullTriangle = triangles[0];
+	let forceMax = computeRelativeStress(node, mostStressfullTriangle);
 	for (const triangle of triangles) {
-		if (mostStressfullTriangle.stressVector.value < triangle.stressVector.value) {
+		const force = computeRelativeStress(node, triangle);
+		if (forceMax < force) {
 			mostStressfullTriangle = triangle;
+			forceMax = force;
 		}
 	}
 
-	const newNodeX = (mostStressfullTriangle.incenter[0] - node[0]) * directionRatio + node[0];
-	const newNodeY = (mostStressfullTriangle.incenter[1] - node[1]) * directionRatio + node[1];
+	const crackedNode = computeCrackedPoint(node, mostStressfullTriangle, forceMax);
 
 	return {
-		value: sum / triangles.length,
-		newNode: [sanitizeCoord(newNodeX), sanitizeCoord(newNodeY)]
+		value: normalizedStressValue,
+		newNode: crackedNode
 	};
 };
 
@@ -72,7 +98,7 @@ const getPressuredNodes = ({
 		const triangleIdsForNode = trianglesByNodes[nodeId];
 		const triangleIds = Object.keys(triangleIdsForNode);
 		const node = decryptHash(nodeId);
-		const stress = computeStress(
+		const stress = computeStressForNode(
 			node,
 			triangleIds.map((id) => trianglesById[id])
 		);
@@ -95,9 +121,6 @@ const getPressuredNodes = ({
  * - stress vector of a triangle:
  * 		- represented by its value
  * 		- exerts 3 forces on its 3 respective vertices
- * TODO	- for a given vertex, the force strength is given by (incenterDistance * value)
- *
- * TODO @tpriou don't override this algorithm: create new function instead
  *
  * Current crack algorithm:
  * - select a cracking node using nearby triangle's stress vectors
