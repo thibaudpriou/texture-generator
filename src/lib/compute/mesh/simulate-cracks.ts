@@ -18,7 +18,7 @@ import type {
 
 type Stress = {
 	value: number;
-	newNode: Point;
+	crackedNode: Point;
 };
 
 const MAX_DISTANCE_SQUARED = WIDTH ** 2 + HEIGHT ** 2;
@@ -77,7 +77,7 @@ const computeStressForNode = (node: Point, triangles: Triangle[]): Stress => {
 
 	return {
 		value: normalizedStressValue,
-		newNode: crackedNode
+		crackedNode
 	};
 };
 
@@ -199,7 +199,7 @@ export const simulateCracks = (data: {
 	// remove old triangles around this node
 	const {
 		nodeId,
-		stress: { newNode }
+		stress: { crackedNode }
 	} = maxPressuredNode;
 	const trianglesIds: TriangleId[] = Object.keys(data.trianglesByNodes[nodeId]);
 	for (const triangleId of trianglesIds) {
@@ -212,8 +212,8 @@ export const simulateCracks = (data: {
 
 	// compute new triangles with Delaunay
 	const existingNodeIds = Object.keys(data.trianglesByNodes) as PointHash[];
-	const newTrianglesNodes = [newNode, ...existingNodeIds.map(getPointFromHash)];
-	// const newTrianglesNodes = [newNode, ...impactedNodesIds.keys().map(getPointFromHash)];
+	const newTrianglesNodes = [crackedNode, ...existingNodeIds.map(getPointFromHash)];
+	// const newTrianglesNodes = [crackedNode, ...impactedNodesIds.keys().map(getPointFromHash)];
 
 	// ! DEBUG ONLY
 	if (VERBOSE) {
